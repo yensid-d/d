@@ -3,25 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบตรวจโรค</title>
+    <title>ระบบตรวจโรค - กรอกข้อมูลผู้ป่วย</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 p-4 md:p-8">
 
     <div class="max-w-4xl mx-auto space-y-8">
-        <header class="flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-2xl shadow-xs border border-slate-100 gap-4">
-            <div class="text-center md:text-left">
-                <h1 class="text-3xl font-bold text-blue-600">Medical Web Portal</h1>
-                <p class="text-slate-500 text-sm">ระบบบันทึกผลการตรวจโรค</p>
-            </div>
-            <a href="chat.html" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition shadow-xs">
-                💬 ไปหน้าคุยกับผู้เชี่ยวชาญ →
-            </a>
+        <header class="bg-white p-6 rounded-2xl shadow-xs border border-slate-100 text-center">
+            <h1 class="text-3xl font-bold text-blue-600">Medical Web Portal</h1>
+            <p class="text-slate-500 text-sm">กรุณากรอกข้อมูลเพื่อเข้าสู่การประเมินและปรึกษาแพทย์</p>
         </header>
 
         <section class="bg-white p-6 rounded-2xl shadow-xs border border-slate-100">
-            <h2 class="text-xl font-semibold mb-4 text-blue-500">1. บันทึกข้อมูลผู้ป่วยและผลการตรวจ</h2>
+            <h2 class="text-xl font-semibold mb-4 text-blue-500">บันทึกข้อมูลผู้ป่วยและผลการตรวจ</h2>
             <form id="recordForm" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -54,23 +49,18 @@
                     <label class="block text-sm font-medium text-slate-700">อาการที่พบ</label>
                     <textarea id="symptoms" rows="3" required class="mt-1 block w-full p-2 border border-slate-300 rounded-lg shadow-xs" placeholder="ระบุอาการเบื้องต้น..."></textarea>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white p-2.5 rounded-lg hover:bg-blue-700 font-medium transition">
-                    บันทึกผลข้อมูล
+                <button type="submit" class="w-full bg-blue-600 text-white p-2.5 rounded-lg hover:bg-blue-700 font-medium transition shadow-sm cursor-pointer">
+                    บันทึกข้อมูลและเข้าสู่ระบบปรึกษาแพทย์
                 </button>
             </form>
-        </section>
-
-        <section id="clinicSection" class="bg-white p-6 rounded-2xl shadow-xs border border-slate-100 hidden">
-            <h2 class="text-xl font-semibold mb-2 text-amber-600">🏥 แนะนำคลินิกใกล้คุณ / คลินิกที่เข้าร่วมโครงการ</h2>
-            <p class="text-sm text-slate-500 mb-4">เนื่องจากผลตรวจของคุณเป็น Positive เราขอแนะนำสถานพยาบาลที่สามารถเข้ารับการรักษาต่อได้:</p>
-            <div id="clinicList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
     </div>
 
     <script>
+        // ใช้ v สองตัว (nobvnvvj) ตามระบบของดิสนีย์เรียบร้อยครับ!
         const SUPABASE_URL = "https://gsfwxrbeykupnobvnvvj.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_qpHFtNjXGKYTIXMXaT_NPw_BLIOv7oc";
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         document.getElementById('recordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -85,29 +75,18 @@
                 .from('patient_records')
                 .insert([{ first_name: firstName, last_name: lastName, age: age, address_summary: address, test_result: testResult, symptoms: symptoms }]);
 
-            if (error) { alert('เกิดข้อผิดพลาด: ' + error.message); return; }
+            if (error) { 
+                alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + error.message); 
+                return; 
+            }
 
-            alert('บันทึกข้อมูลการตรวจสำเร็จ!');
-            if (testResult === 'positive') { loadClinics(); } 
-            else { document.getElementById('clinicSection').classList.add('hidden'); }
+            const fullName = `${firstName} ${lastName}`;
+            localStorage.setItem('patient_chat_name', fullName);
+            localStorage.setItem('patient_test_result', testResult);
+
+            alert('บันทึกข้อมูลสำเร็จ! ระบบกำลังนำคุณเข้าสู่ห้องแชท');
+            window.location.href = "chat.html";
         });
-
-        async function loadClinics() {
-            const { data: clinics, error } = await supabase.from('clinics').select('*');
-            if (error) return;
-            const clinicListDiv = document.getElementById('clinicList');
-            clinicListDiv.innerHTML = '';
-            clinics.forEach(clinic => {
-                clinicListDiv.innerHTML += `
-                    <div class="p-4 border border-slate-200 rounded-xl bg-slate-50 space-y-2">
-                        <h3 class="font-bold text-slate-800">${clinic.name}</h3>
-                        <p class="text-sm text-slate-600">📍 ${clinic.location}</p>
-                        <p class="text-sm text-slate-600">📞 ติดต่อ: ${clinic.contact || 'ไม่มีข้อมูล'}</p>
-                        ${clinic.google_maps_url ? `<a href="${clinic.google_maps_url}" target="_blank" class="inline-block mt-2 text-xs font-semibold text-blue-600 hover:underline">ดูแผนที่บน Google Maps →</a>` : ''}
-                    </div>`;
-            });
-            document.getElementById('clinicSection').classList.remove('hidden');
-        }
     </script>
 </body>
 </html>
