@@ -49,10 +49,11 @@
     </footer>
 
     <script>
-        // ใช้ v สองตัว (nobvnvvj) ตรงตามระบบจริงแล้วครับ!
         const SUPABASE_URL = "https://gsfwxrbeykupnobvnvvj.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_qpHFtNjXGKYTIXMXaT_NPw_BLIOv7oc";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // 🌟 เปลี่ยนชื่อตัวแปรเป็น db เพื่อเลี่ยงการประกาศซ้ำเช่นกัน
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const savedName = localStorage.getItem('patient_chat_name');
         const savedResult = localStorage.getItem('patient_test_result');
@@ -69,7 +70,7 @@
         }
 
         async function loadChatHistory() {
-            const { data: chats, error } = await supabase
+            const { data: chats, error } = await db
                 .from('expert_chats')
                 .select('*')
                 .order('created_at', { ascending: true });
@@ -123,7 +124,7 @@
         }
 
         async function loadClinics() {
-            const { data: clinics, error } = await supabase.from('clinics').select('*');
+            const { data: clinics, error } = await db.from('clinics').select('*');
             if (error || !clinics) return;
             const clinicListDiv = document.getElementById('clinicList');
             clinicListDiv.innerHTML = '';
@@ -142,7 +143,7 @@
             e.preventDefault();
             const chatMessage = document.getElementById('chatMessage').value;
 
-            const { error } = await supabase
+            const { error } = await db
                 .from('expert_chats')
                 .insert([{ patient_name: savedName, chat_message: chatMessage }]);
 
