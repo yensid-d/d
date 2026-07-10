@@ -86,7 +86,32 @@
             localStorage.setItem('patient_chat_name', fullName);
             localStorage.setItem('patient_test_result', testResult);
 
-            alert('บันทึกข้อมูลสำเร็จ! ระบบกำลังนำคุณเข้าสู่ห้องแชท');
+            document.getElementById('recordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const age = parseInt(document.getElementById('age').value);
+            const address = document.getElementById('address').value;
+            const testResult = document.getElementById('testResult').value;
+            const symptoms = document.getElementById('symptoms').value;
+
+            // ส่งข้อมูลไปยัง Supabase
+            const { error } = await db
+                .from('patient_records')
+                .insert([{ first_name: firstName, last_name: lastName, age: age, address_summary: address, test_result: testResult, symptoms: symptoms }]);
+
+            // ถ้าพังให้แจ้งเตือนบอกสาเหตุก่อน (กันกรณีกดแล้วนิ่งเพราะติดบั๊กอื่น)
+            if (error) { 
+                alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + error.message); 
+                return; 
+            }
+
+            // เซฟข้อมูลลงเครื่องเบราว์เซอร์
+            const fullName = `${firstName} ${lastName}`;
+            localStorage.setItem('patient_chat_name', fullName);
+            localStorage.setItem('patient_test_result', testResult);
+
+            // 🚀 เอา alert สำเร็จออกแล้ว -> สั่งย้ายหน้าไปหน้าแชททันทีแบบลื่นๆ!
             window.location.href = "chat.html";
         });
     </script>
