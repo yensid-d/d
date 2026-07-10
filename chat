@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Consultation Chat</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* พื้นหลังห้องแชทสีฟ้าอ่อนโทนสบายตา */
+        .chat-bg {
+            background-color: #f0f7ff;
+        }
+        /* กล่องข้อความฝั่งผู้ป่วย (สีฟ้าสดใสอิงตามธีม) */
+        .user-bubble {
+            background-color: #3b82f6;
+            color: #ffffff;
+        }
+        /* กล่องข้อความฝั่งหมอ/ผู้เชี่ยวชาญ (สีขาวขอบฟ้าอ่อน) */
+        .doctor-bubble {
+            background-color: #ffffff;
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans antialiased h-screen flex flex-col justify-between">
+
+    <header class="bg-blue-600 text-white p-4 flex items-center justify-between shadow-xs shrink-0">
+        <div class="flex items-center space-x-3">
+            <a href="index.html" class="text-white hover:text-blue-200 transition text-xl font-bold">❮</a>
+            <div>
+                <h1 class="text-lg font-bold leading-tight">ศูนย์ปรึกษาผู้เชี่ยวชาญ</h1>
+                <p class="text-xs text-blue-200 flex items-center">● พร้อมให้บริการตอบข้อซักถาม</p>
+            </div>
+        </div>
+        <div class="text-xs bg-blue-700 px-3 py-1.5 rounded-full border border-blue-500 font-medium">
+            Medical Chat
+        </div>
+    </header>
+
+    <main class="chat-bg flex-1 overflow-y-auto p-4 space-y-4" id="chatContainer">
+        <div id="chatHistory" class="space-y-4 max-w-2xl mx-auto">
+            <p class="text-slate-400 text-center py-4 text-sm">กำลังเชื่อมต่อห้องแชท...</p>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 p-3 shrink-0 shadow-md">
+        <form id="expertChatForm" class="max-w-2xl mx-auto space-y-2">
+            <div class="flex items-center space-x-2">
+                <span class="text-xs font-semibold text-slate-500 shrink-0">ชื่อผู้สอบถาม:</span>
+                <input type="text" id="chatPatientName" placeholder="กรอกชื่อของคุณก่อนพิมพ์ข้อความ" required 
+                       class="text-xs w-full bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-hidden focus:border-blue-500">
+            </div>
+            
+            <div class="flex items-end space-x-2">
+                <textarea id="chatMessage" rows="1" required placeholder="พิมพ์ข้อความเพื่อปรึกษาแพทย์..." 
+                          class="flex-1 min-h-[40px] max-h-[120px] p-2 bg-slate-50 border border-slate-200 rounded-xl resize-none focus:outline-hidden focus:border-blue-500 text-sm"
+                          oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-xs transition shrink-0 h-[40px] flex items-center justify-center">
+                    ส่งข้อความ
+                </button>
+            </div>
+        </form>
+    </footer>
+
+    <script>
+        // --- CONFIG SUPABASE (ใช้ค่าเดียวกับหน้าหลักของคุณ) ---
+        const SUPABASE_URL = "https://gsfwxrbeykupnobvnvvj.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_qpHFtNjXGKYTIXMXaT_NPw_BLIOv7oc";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // โหลดประวัติแชททันที
+        loadChatHistory();
+
+        // ฟังก์ชันดึงแชทมาแสดงสไตล์ฟ้า-ขาว
+        async function loadChatHistory() {
+            const { data: chats, error } = await supabase
+                .from('expert_chats')
+                .select('*')
+                .order('created_at', { ascending: true }); // เรียงจากเก่าไปใหม่ แชทไหลลงข้างล่าง
+
+            if (error) { console.error(error); return; }
+
+            const chatHistoryDiv = document.getElementById('chatHistory');
+            chatHistoryDiv.innerHTML = '';
+
+            if (!chats || chats.length === 0) {
+                chatHistoryDiv.innerHTML = '<p class="text-slate-400 text-center py-8 text-sm bg-white/60 rounded-xl border border-dashed border-slate-200">เริ่มต้นปรึกษาปัญหาสุขภาพโดยระบุชื่อแล้วพิมพ์ข้อความด้านล่าง</p>';
+                return;
+            }
+
+            chats.forEach(chat => {
+                const chatTime = new Date(chat.created_at).toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
+
+                // 1. ข้อความฝั่งผู้ป่วย (เด้งขวา - บับเบิ้ลสีฟ้า ตัวหนังสือขาว)
+                let chatHtml = `
+                    <div class="flex flex-col items-end w-full space-y-1">
+                        <span class="text-[11px] text-slate-500 mr-1">${chat.patient_name}</span>
+                        <div class="flex items-end space-x-1.5 max-w-[80%]">
+                            <span class="text-[10px] text-slate-400 shrink-0 select-none">${chatTime}</span>
+                            <div class="user-bubble p-2.5 rounded-2xl rounded-tr-xs shadow-xs text-sm break-words">
+                                ${chat.chat_message}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // 2. ข้อความฝั่งหมอ/ผู้เชี่ยวชาญ (เด้งซ้าย - บับเบิ้ลสีขาว ขอบเทาอ่อน ตัวหนังสือเข้ม)
+                if (chat.expert_reply) {
+                    chatHtml += `
+                        <div class="flex flex-col items-start w-full space-y-1 mt-2">
+                            <span class="text-[11px] text-blue-600 font-semibold ml-1">👨‍⚕️ ผู้เชี่ยวชาญทางการแพทย์</span>
+                            <div class="flex items-end space-x-1.5 max-w-[80%]">
+                                <div class="doctor-bubble border border-blue-100 p-2.5 rounded-2xl rounded-tl-xs shadow-xs text-sm break-words">
+                                    ${chat.expert_reply}
+                                </div>
+                                <span class="text-[10px] text-slate-400 shrink-0 select-none">${chatTime}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // ถ้ายังไม่มีการตอบกลับ
+                    chatHtml = chatHtml.replace('shrink-0 select-none">', 'shrink-0 select-none text-right text-[10px] text-slate-400">ส่งแล้ว<br>');
+                }
+
+                chatHistoryDiv.innerHTML += chatHtml;
+            });
+
+            // เลื่อนลงล่างสุดอัตโนมัติ
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // ฟังก์ชันกดส่งข้อความ
+        document.getElementById('expertChatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const patientName = document.getElementById('chatPatientName').value;
+            const chatMessage = document.getElementById('chatMessage').value;
+
+            const { error } = await supabase
+                .from('expert_chats')
+                .insert([{ patient_name: patientName, chat_message: chatMessage }]);
+
+            if (error) {
+                alert('ส่งข้อความไม่สำเร็จ: ' + error.message);
+            } else {
+                const textarea = document.getElementById('chatMessage');
+                textarea.value = '';
+                textarea.style.height = '40px'; 
+                
+                await loadChatHistory();
+            }
+        });
+    </script>
+</body>
+</html>
