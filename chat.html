@@ -127,11 +127,12 @@
             const clinicListDiv = document.getElementById('clinicList');
             clinicListDiv.innerHTML = '';
             clinics.forEach(clinic => {
+                // 🌟 แก้ไขจุดที่สแลชเกินเรียบร้อยแล้วครับ
                 clinicListDiv.innerHTML += `
                     <div class="p-2 border border-amber-200 rounded-lg bg-white space-y-0.5">
                         <h4 class="font-bold text-slate-800">${clinic.name}</h4>
                         <p class="text-[11px] text-slate-600">📍 ${clinic.location}</p>
-                        \${clinic.google_maps_url ? `<a href="\${clinic.google_maps_url}" target="_blank" class="text-[10px] text-blue-600 font-medium hover:underline">แผนที่ →</a>` : ''}
+                        ${clinic.google_maps_url ? `<a href="${clinic.google_maps_url}" target="_blank" class="text-[10px] text-blue-600 font-medium hover:underline">แผนที่ →</a>` : ''}
                     </div>`;
             });
             document.getElementById('clinicSection').classList.remove('hidden');
@@ -142,7 +143,6 @@
             const chatMessageInput = document.getElementById('chatMessage');
             const chatMessage = chatMessageInput.value;
 
-            // 1. ยิงข้อมูลเข้า Supabase
             const { error } = await db
                 .from('expert_chats')
                 .insert([{ patient_name: savedName, chat_message: chatMessage }]);
@@ -150,16 +150,12 @@
             if (error) {
                 alert('ส่งข้อความไม่สำเร็จ: ' + error.message);
             } else {
-                // 2. เคลียร์ข้อความในช่องอินพุต
                 chatMessageInput.value = '';
                 chatMessageInput.style.height = '40px'; 
-                
-                // 🚀 3. อัปเดตข้อความบนหน้าจอทันที ไม่ต้องกดรีเซ็ตหน้าเว็บเองแล้ว!
                 await loadChatHistory();
             }
         });
 
-        // 🌟 ดึงข้อมูลใหม่จากเบสทุกๆ 3 วินาทีแบบ Auto เผื่อมีการอัปเดตคำตอบฝั่งแพทย์
         setInterval(loadChatHistory, 3000);
     </script>
 </body>
