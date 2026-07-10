@@ -57,10 +57,9 @@
     </div>
 
     <script>
+        // ตั้งค่าตัวแปรเชื่อมต่อ Supabase
         const SUPABASE_URL = "https://gsfwxrbeykupnobvnvvj.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_qpHFtNjXGKYTIXMXaT_NPw_BLIOv7oc";
-        
-        // 🌟 เปลี่ยนชื่อตัวแปรเป็น db เพื่อไม่ให้ชนกับระบบของบราวเซอร์
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         document.getElementById('recordForm').addEventListener('submit', async (e) => {
@@ -72,46 +71,23 @@
             const testResult = document.getElementById('testResult').value;
             const symptoms = document.getElementById('symptoms').value;
 
-            // 🌟 เรียกใช้งานผ่านตัวแปร db แทน
+            // ส่งข้อมูลบันทึกลงฐานข้อมูล
             const { error } = await db
                 .from('patient_records')
                 .insert([{ first_name: firstName, last_name: lastName, age: age, address_summary: address, test_result: testResult, symptoms: symptoms }]);
 
+            // หากต่อเบสไม่สำเร็จ ให้แจ้งเตือนบอกสาเหตุก่อน
             if (error) { 
                 alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + error.message); 
                 return; 
             }
 
+            // บันทึกสถานะลงเครื่องบราวเซอร์ไว้ใช้ในหน้าถัดไป
             const fullName = `${firstName} ${lastName}`;
             localStorage.setItem('patient_chat_name', fullName);
             localStorage.setItem('patient_test_result', testResult);
 
-            document.getElementById('recordForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
-            const age = parseInt(document.getElementById('age').value);
-            const address = document.getElementById('address').value;
-            const testResult = document.getElementById('testResult').value;
-            const symptoms = document.getElementById('symptoms').value;
-
-            // ส่งข้อมูลไปยัง Supabase
-            const { error } = await db
-                .from('patient_records')
-                .insert([{ first_name: firstName, last_name: lastName, age: age, address_summary: address, test_result: testResult, symptoms: symptoms }]);
-
-            // ถ้าพังให้แจ้งเตือนบอกสาเหตุก่อน (กันกรณีกดแล้วนิ่งเพราะติดบั๊กอื่น)
-            if (error) { 
-                alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + error.message); 
-                return; 
-            }
-
-            // เซฟข้อมูลลงเครื่องเบราว์เซอร์
-            const fullName = `${firstName} ${lastName}`;
-            localStorage.setItem('patient_chat_name', fullName);
-            localStorage.setItem('patient_test_result', testResult);
-
-            // 🚀 เอา alert สำเร็จออกแล้ว -> สั่งย้ายหน้าไปหน้าแชททันทีแบบลื่นๆ!
+            // ย้ายหน้าทันทีโดยไม่มี alert แจ้งเตือนขัดจังหวะ
             window.location.href = "chat.html";
         });
     </script>
