@@ -68,9 +68,11 @@
         }
 
         async function loadChatHistory() {
+            // 🌟 ใส่ .eq('patient_name', savedName) เพื่อกรองเอาเฉพาะแชทของตัวเองแล้วครับ!
             const { data: chats, error } = await db
                 .from('expert_chats')
                 .select('*')
+                .eq('patient_name', savedName)
                 .order('created_at', { ascending: true });
 
             if (error) { console.error(error); return; }
@@ -127,7 +129,6 @@
             const clinicListDiv = document.getElementById('clinicList');
             clinicListDiv.innerHTML = '';
             clinics.forEach(clinic => {
-                // 🌟 แก้ไขจุดที่สแลชเกินเรียบร้อยแล้วครับ
                 clinicListDiv.innerHTML += `
                     <div class="p-2 border border-amber-200 rounded-lg bg-white space-y-0.5">
                         <h4 class="font-bold text-slate-800">${clinic.name}</h4>
