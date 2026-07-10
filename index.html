@@ -57,10 +57,11 @@
     </div>
 
     <script>
-        // ใช้ v สองตัว (nobvnvvj) ตามระบบของดิสนีย์เรียบร้อยครับ!
         const SUPABASE_URL = "https://gsfwxrbeykupnobvnvvj.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_qpHFtNjXGKYTIXMXaT_NPw_BLIOv7oc";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // 🌟 เปลี่ยนชื่อตัวแปรเป็น db เพื่อไม่ให้ชนกับระบบของบราวเซอร์
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         document.getElementById('recordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -71,7 +72,8 @@
             const testResult = document.getElementById('testResult').value;
             const symptoms = document.getElementById('symptoms').value;
 
-            const { error } = await supabase
+            // 🌟 เรียกใช้งานผ่านตัวแปร db แทน
+            const { error } = await db
                 .from('patient_records')
                 .insert([{ first_name: firstName, last_name: lastName, age: age, address_summary: address, test_result: testResult, symptoms: symptoms }]);
 
