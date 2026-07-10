@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบตรวจโรคและปรึกษาผู้เชี่ยวชาญ</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto space-y-8">
+        <header class="text-center space-y-2">
+            <h1 class="text-3xl font-bold text-blue-600">Medical Web Portal</h1>
+            <p class="text-slate-500">ระบบบันทึกผลการตรวจโรค แนะนำคลินิก และปรึกษาผู้เชี่ยวชาญ</p>
+        </header>
+
+        <section class="bg-white p-6 rounded-2xl shadow-xs border border-slate-100">
+            <h2 class="text-xl font-semibold mb-4 text-blue-500">1. บันทึกข้อมูลผู้ป่วยและผลการตรวจ</h2>
+            <form id="recordForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">ชื่อ</label>
+                        <input type="text" id="firstName" required class="mt-1 block w-full p-2 border border-slate-300 rounded-lg shadow-xs">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">นามสกุล</label>
+                        <input type="text" id="lastName" required class="mt-1 block w-full p-2 border border-slate-300 rounded-lg shadow-xs">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">อายุ</label>
+                        <input type="number" id="age" required class="mt-1 block w-full p-2 border border-slate-300 rounded-lg shadow-xs">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-slate-700">ที่อยู่คร่าวๆ (จังหวัด/อำเภอ)</label>
+                        <input type="text" id="address" required class="mt-1 block w-full p-2 border border-slate-300 rounded-lg shadow-xs" placeholder="เช่น นนทบุรี, บางใหญ่">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">ผลที่ได้จากการตรวจ</label>
+                    <select id="testResult" class="mt-1 block w-full p-2 border border-slate-300 rounded-lg shadow-xs bg-white">
+                        <option value="negative">Negative (-) ไม่พบเชื้อ/ไม่พบโรค</option>
+                        <option value="positive">Positive (+) พบเชื้อ/พบโรค</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">อาการที่พบ</label>
+                    <textarea id="symptoms" rows="3" required class="mt-1 block w-full p-2 border border-slate-300 rounded-lg shadow-xs" placeholder="ระบุอาการระเบื้องต้น..."></textarea>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white p-2.5 rounded-lg hover:bg-blue-700 font-medium transition">
+                    บันทึกผลข้อมูล
+                </button>
+            </form>
+        </section>
+
+        <section id="clinicSection" class="bg-white p-6 rounded-2xl shadow-xs border border-slate-100 hidden">
+            <h2 class="text-xl font-semibold mb-2 text-amber-600">🏥 แนะนำคลินิกใกล้คุณ / คลินิกที่เข้าร่วมโครงการ</h2>
+            <p class="text-sm text-slate-500 mb-4">เนื่องจากผลตรวจของคุณเป็น Positive เราขอแนะนำสถานพยาบาลที่สามารถเข้ารับการรักษาต่อได้:</p>
+            <div id="clinicList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                </div>
+        </section>
+
+        <section class="bg-white p-6 rounded-2xl shadow-xs border border-slate-100">
+            <h2 class="text-xl font-semibold mb-4 text-emerald-600">💬 ปรึกษาผู้เชี่ยวชาญ</h2>
+            <form id="expertChatForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">ชื่อผู้สอบถาม</label>
+                    <input type="text" id="chatPatientName" required class="mt-1 block w-full p-2 border border-slate-300 rounded-lg shadow-xs">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">พิมพ์คำถามหรือข้อกังวลที่ต้องการปรึกษา</label>
+                    <textarea id="chatMessage" rows="3" required class="mt-1 block w-full p-2 border border-slate-300 rounded-lg shadow-xs" placeholder="เขียนคำถามที่นี่เพื่อให้ผู้เชี่ยวชาญมาตอบ..."></textarea>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 text-white p-2.5 rounded-lg hover:bg-emerald-700 font-medium transition">
+                    ส่งข้อความหาผู้เชี่ยวชาญ
+                </button>
+            </form>
+        </section>
+    </div>
+
+    <script>
+        // --- กำหนดค่า CONFIG SUPABASE ---
+        const SUPABASE_URL = "https://gsfwxrbeykupnobvnvvj.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_qpHFtNjXGKYTIXMXaT_NPw_BLIOv7oc";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- ฟังฟังก์ชันบึนทึกข้อมูลตรวจโรค ---
+        document.getElementById('recordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const age = parseInt(document.getElementById('age').value);
+            const address = document.getElementById('address').value;
+            const testResult = document.getElementById('testResult').value;
+            const symptoms = document.getElementById('symptoms').value;
+
+            // บันทึกลงตาราง patient_records
+            const { error } = await supabase
+                .from('patient_records')
+                .insert([{ 
+                    first_name: firstName, 
+                    last_name: lastName, 
+                    age: age, 
+                    address_summary: address, 
+                    test_result: testResult, 
+                    symptoms: symptoms 
+                }]);
+
+            if (error) {
+                alert('เกิดข้อผิดพลาด: ' + error.message);
+                return;
+            }
+
+            alert('บันทึกข้อมูลการตรวจสำเร็จ!');
+
+            // เงื่อนไข: ถ้าเป็น Positive ให้แสดงระบบแนะนำคลินิก
+            if (testResult === 'positive') {
+                loadClinics();
+            } else {
+                document.getElementById('clinicSection').classList.add('hidden');
+            }
+        });
+
+        // --- ฟังก์ชันดึงข้อมูลคลินิกมาแสดง ---
+        async function loadClinics() {
+            const { data: clinics, error } = await supabase
+                .from('clinics')
+                .select('*');
+
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            const clinicListDiv = document.getElementById('clinicList');
+            clinicListDiv.innerHTML = ''; // เคลียร์ค่าเก่า
+
+            if (clinics.length === 0) {
+                clinicListDiv.innerHTML = '<p class="text-slate-500">ยังไม่มีข้อมูลคลินิกในระบบ</p>';
+            } else {
+                clinics.forEach(clinic => {
+                    clinicListDiv.innerHTML += `
+                        <div class="p-4 border border-slate-200 rounded-xl bg-slate-50 space-y-2">
+                            <h3 class="font-bold text-slate-800">${clinic.name}</h3>
+                            <p class="text-sm text-slate-600">📍 ${clinic.location}</p>
+                            <p class="text-sm text-slate-600">📞 ติดต่อ: ${clinic.contact || 'ไม่มีข้อมูล'}</p>
+                            ${clinic.google_maps_url ? `<a href="${clinic.google_maps_url}" target="_blank" class="inline-block mt-2 text-xs font-semibold text-blue-600 hover:underline">ดูแผนที่บน Google Maps →</a>` : ''}
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('clinicSection').classList.remove('hidden');
+        }
+
+        // --- ฟังก์ชันระบบส่งข้อมูลคุยกับผู้เชี่ยวชาญ ---
+        document.getElementById('expertChatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const patientName = document.getElementById('chatPatientName').value;
+            const chatMessage = document.getElementById('chatMessage').value;
+
+            const { error } = await supabase
+                .from('expert_chats')
+                .insert([{ 
+                    patient_name: patientName, 
+                    chat_message: chatMessage 
+                }]);
+
+            if (error) {
+                alert('ไม่สามารถส่งข้อความได้: ' + error.message);
+            } else {
+                alert('ส่งข้อความปรึกษาผู้เชี่ยวชาญแล้ว! กรุณารอการตอบกลับในระบบ');
+                document.getElementById('chatMessage').value = '';
+            }
+        });
+    </script>
+</body>
+</html>
