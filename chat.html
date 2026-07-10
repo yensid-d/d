@@ -67,8 +67,8 @@
             loadChatHistory();
         }
 
+        // 🌟 ฟังก์ชันโหลดประวัติแชทเวอร์ชันอัปเดต รองรับข้อความรัวฝั่งหมอแล้วครับ
         async function loadChatHistory() {
-            // 🌟 ใส่ .eq('patient_name', savedName) เพื่อกรองเอาเฉพาะแชทของตัวเองแล้วครับ!
             const { data: chats, error } = await db
                 .from('expert_chats')
                 .select('*')
@@ -88,20 +88,41 @@
             chats.forEach(chat => {
                 const chatTime = new Date(chat.created_at).toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
 
-                let chatHtml = `
-                    <div class="flex flex-col items-end w-full space-y-1">
-                        <span class="text-[11px] text-slate-500 mr-1">${chat.patient_name}</span>
-                        <div class="flex items-end space-x-1.5 max-w-[80%]">
-                            <span class="text-[10px] text-slate-400 shrink-0 select-none">${chatTime}</span>
-                            <div class="user-bubble p-2.5 rounded-2xl rounded-tr-xs shadow-xs text-sm break-words">
-                                ${chat.chat_message}
+                // กรณีที่ 1: แถวที่มีข้อความที่คนไข้พิมพ์ส่งไป
+                if (chat.chat_message) {
+                    let chatHtml = `
+                        <div class="flex flex-col items-end w-full space-y-1">
+                            <span class="text-[11px] text-slate-500 mr-1">${chat.patient_name}</span>
+                            <div class="flex items-end space-x-1.5 max-w-[80%]">
+                                <span class="text-[10px] text-slate-400 shrink-0 select-none">${chatTime}</span>
+                                <div class="user-bubble p-2.5 rounded-2xl rounded-tr-xs shadow-xs text-sm break-words">
+                                    ${chat.chat_message}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
+                    `;
 
-                if (chat.expert_reply) {
-                    chatHtml += `
+                    // หากมีคำตอบหมอพ่วงมาด้วยในแถวนี้ ให้โชว์กล่องหมอต่อท้ายลงมา
+                    if (chat.expert_reply) {
+                        chatHtml += `
+                            <div class="flex flex-col items-start w-full space-y-1 mt-2">
+                                <span class="text-[11px] text-blue-600 font-semibold ml-1">👨‍⚕️ ผู้เชี่ยวชาญ</span>
+                                <div class="flex items-end space-x-1.5 max-w-[80%]">
+                                    <div class="doctor-bubble border border-blue-100 p-2.5 rounded-2xl rounded-tl-xs shadow-xs text-sm break-words">
+                                        ${chat.expert_reply}
+                                    </div>
+                                    <span class="text-[10px] text-slate-400 shrink-0 select-none">${chatTime}</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        chatHtml = chatHtml.replace('shrink-0 select-none">', 'shrink-0 select-none text-right text-[10px] text-slate-400">ส่งแล้ว<br>');
+                    }
+                    chatHistoryDiv.innerHTML += chatHtml;
+                } 
+                // กรณีที่ 2: แถวที่เป็นข้อความที่คุณหมอเป็นคนพิมพ์เบิ้ลเพิ่มเดี่ยวๆ เข้ามาใหม่จากหลังบ้าน
+                else if (chat.expert_reply) {
+                    let chatHtml = `
                         <div class="flex flex-col items-start w-full space-y-1 mt-2">
                             <span class="text-[11px] text-blue-600 font-semibold ml-1">👨‍⚕️ ผู้เชี่ยวชาญ</span>
                             <div class="flex items-end space-x-1.5 max-w-[80%]">
@@ -112,11 +133,8 @@
                             </div>
                         </div>
                     `;
-                } else {
-                    chatHtml = chatHtml.replace('shrink-0 select-none">', 'shrink-0 select-none text-right text-[10px] text-slate-400">ส่งแล้ว<br>');
+                    chatHistoryDiv.innerHTML += chatHtml;
                 }
-
-                chatHistoryDiv.innerHTML += chatHtml;
             });
 
             const chatContainer = document.getElementById('chatContainer');
@@ -157,6 +175,7 @@
             }
         });
 
+        // คอยดึงอัปเดตแชทใหม่จากฐานข้อมูลทุกๆ 3 วินาที
         setInterval(loadChatHistory, 3000);
     </script>
 </body>
