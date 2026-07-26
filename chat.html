@@ -3,180 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ปรึกษาแพทย์และผู้เชี่ยวชาญ</title>
+    <title>Multi STIs Test Kit</title>
+    <!-- Google Font: Itim -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .chat-bg { background-color: #f0f7ff; }
-        .user-bubble { background-color: #3b82f6; color: #ffffff; }
-        .doctor-bubble { background-color: #ffffff; color: #1e293b; }
+        body { font-family: 'Itim', cursive; background-color: #f0f9ff; }
     </style>
 </head>
-<body class="bg-slate-50 font-sans antialiased h-screen flex flex-col justify-between">
+<body class="min-h-screen flex flex-col justify-between items-center pb-20">
 
-    <header class="bg-blue-600 text-white p-4 flex items-center justify-between shadow-xs shrink-0">
-        <div>
-            <h1 class="text-lg font-bold leading-tight" id="welcomeUser">ศูนย์ปรึกษาผู้เชี่ยวชาญ</h1>
-            <p class="text-xs text-blue-200 flex items-center">● เจ้าหน้าที่กำลังออนไลน์</p>
-        </div>
-        <div class="text-xs bg-blue-700 px-3 py-1.5 rounded-full border border-blue-500 font-medium">
-            Medical Chat
-        </div>
+    <!-- Header ด้านบน -->
+    <header class="w-full max-w-lg bg-white border-b border-sky-100 p-4 shadow-sm text-center sticky top-0 z-10">
+        <h1 class="text-xl font-bold text-sky-950">ระบบปรึกษาแพทย์ & คลินิก</h1>
+        <p id="patientInfo" class="text-xs text-sky-600 mt-0.5">กำลังโหลดข้อมูล...</p>
     </header>
 
-    <div id="clinicSection" class="bg-amber-50 border-b border-amber-200 p-3 shrink-0 hidden max-h-40 overflow-y-auto">
-        <div class="max-w-2xl mx-auto">
-            <h3 class="text-xs font-bold text-amber-800 mb-1">🏥 แนะนำสถานพยาบาลใกล้คุณ:</h3>
-            <div id="clinicList" class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs"></div>
-        </div>
-    </div>
+    <!-- Content Area: สลับการแสดงผลด้วย Tab Bar ด้านล่าง -->
+    <main class="w-full max-w-lg flex-1 p-4">
+        
+        <!-- Tab 1: หน้าแชต (Chat View) -->
+        <div id="tabChatView" class="flex flex-col h-full space-y-4">
+            <div id="chatMessages" class="flex-1 bg-white p-4 rounded-2xl border border-sky-100 min-h-[400px] max-h-[60vh] overflow-y-auto space-y-3 shadow-sm">
+                <!-- ข้อความต้อนรับอัตโนมัติ -->
+                <div class="flex items-start gap-2">
+                    <div class="w-8 h-8 rounded-full bg-sky-500 text-white flex items-center justify-center text-xs font-bold">หมอ</div>
+                    <div class="bg-sky-50 text-sky-900 p-3 rounded-2xl rounded-tl-none text-sm max-w-[80%] border border-sky-100">
+                        สวัสดีครับ ยินดีต้อนรับสู่บริการให้คำปรึกษา มีข้อสงสัยหรืออาการอย่างไร สามารถพิมพ์พูดคุยกับคุณหมอได้เลยครับ
+                    </div>
+                </div>
+            </div>
 
-    <main class="chat-bg flex-1 overflow-y-auto p-4 space-y-4" id="chatContainer">
-        <div id="chatHistory" class="space-y-4 max-w-2xl mx-auto">
-            <p class="text-slate-400 text-center py-4 text-sm">กำลังเชื่อมต่อห้องแชท...</p>
+            <!-- กล่องพิมพ์ข้อความ -->
+            <form id="chatForm" class="flex gap-2">
+                <input type="text" id="chatInput" placeholder="พิมพ์ข้อความของคุณที่นี่..." required
+                       class="flex-1 p-3 bg-white border border-sky-100 rounded-xl text-sm focus:outline-none focus:border-sky-400 shadow-sm">
+                <button type="submit" class="bg-sky-500 hover:bg-sky-600 text-white px-5 rounded-xl text-sm font-medium shadow-md transition">
+                    ส่ง
+                </button>
+            </form>
         </div>
+
+        <!-- Tab 2: หน้าแนะนำคลินิกใกล้ฉัน (Clinics View - ซ่อนไว้ก่อน) -->
+        <div id="tabClinicView" class="hidden space-y-4">
+            <div class="bg-white p-4 rounded-2xl border border-sky-100 shadow-sm">
+                <h2 class="text-lg font-bold text-sky-950 mb-1">📍 คลินิกและสถานบริการใกล้ฉัน</h2>
+                <p class="text-xs text-sky-600 mb-3">แนะนำสถานบริการสำหรับเข้ารับการตรวจและปรึกษาเพิ่มเติม</p>
+
+                <!-- รายชื่อคลินิก ตัวอย่าง -->
+                <div class="space-y-3">
+                    <div class="p-3 bg-sky-50/60 rounded-xl border border-sky-100">
+                        <h3 class="font-bold text-sky-900 text-sm">คลินิกเวชกรรมบางรัก</h3>
+                        <p class="text-xs text-sky-700 mt-1">📍 88/1 ถนนสาทรเหนือ แขวงสีลม เขตบางรัก กรุงเทพฯ</p>
+                        <p class="text-xs text-sky-600 mt-0.5">📞 โทร: 02-123-4567 | เปิด 08:30 - 16:30 น.</p>
+                    </div>
+
+                    <div class="p-3 bg-sky-50/60 rounded-xl border border-sky-100">
+                        <h3 class="font-bold text-sky-900 text-sm">ศูนย์บริการสาธารณสุขใกล้บ้าน</h3>
+                        <p class="text-xs text-sky-700 mt-1">📍 ครอบคลุมพื้นที่กรุงเทพฯ และปริมณฑล</p>
+                        <p class="text-xs text-sky-600 mt-0.5">📞 โทร: 1422 (สายด่วนกรมควบคุมโรค)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
-    <footer class="bg-white border-t border-slate-200 p-3 shrink-0 shadow-md">
-        <form id="expertChatForm" class="max-w-2xl mx-auto flex items-end space-x-2">
-            <textarea id="chatMessage" rows="1" required placeholder="พิมพ์ข้อความปรึกษาแพทย์ที่นี่..." 
-                      class="flex-1 min-h-[40px] max-h-[120px] p-2 bg-slate-50 border border-slate-200 rounded-xl resize-none focus:outline-hidden focus:border-blue-500 text-sm"
-                      oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-xs transition shrink-0 h-[40px] flex items-center justify-center cursor-pointer">
-                ส่ง
+    <!-- 📱 Bottom Navigation Tab Bar (อยู่ติดขอบล่างเสมอ) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-sky-100 shadow-lg z-20 flex justify-center">
+        <div class="w-full max-w-lg flex justify-around p-2">
+            
+            <!-- ปุ่มกดไปหน้าแชต -->
+            <button id="btnNavChat" onclick="switchTab('chat')" class="flex flex-col items-center gap-1 p-2 text-sky-500 font-medium">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                <span class="text-xs">ห้องแชต</span>
             </button>
-        </form>
-    </footer>
+
+            <!-- ปุ่มกดไปหน้าคลินิก -->
+            <button id="btnNavClinic" onclick="switchTab('clinic')" class="flex flex-col items-center gap-1 p-2 text-gray-400 font-medium hover:text-sky-500 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="text-xs">คลินิกใกล้ฉัน</span>
+            </button>
+
+        </div>
+    </nav>
 
     <script>
         const SUPABASE_URL = "https://gsfwxrbeykupnobvnvvj.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_qpHFtNjXGKYTIXMXaT_NPw_BLIOv7oc";
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const savedName = localStorage.getItem('patient_chat_name');
-        const savedResult = localStorage.getItem('patient_test_result');
+        // โหลดข้อมูลคนไข้ตาม ID ใน localStorage
+        document.addEventListener('DOMContentLoaded', async () => {
+            const recordId = localStorage.getItem('patient_record_id');
 
-        if (!savedName) {
-            alert("กรุณากรอกข้อมูลผู้ป่วยก่อนเข้าห้องแชทครับ");
-            window.location.href = "index.html";
-        } else {
-            document.getElementById('welcomeUser').innerText = `คุณ ${savedName}`;
-            if(savedResult === 'positive') {
-                loadClinics();
-            }
-            loadChatHistory();
-        }
-
-        // 🌟 ฟังก์ชันโหลดประวัติแชทเวอร์ชันอัปเดต รองรับข้อความรัวฝั่งหมอแล้วครับ
-        async function loadChatHistory() {
-            const { data: chats, error } = await db
-                .from('expert_chats')
-                .select('*')
-                .eq('patient_name', savedName)
-                .order('created_at', { ascending: true });
-
-            if (error) { console.error(error); return; }
-
-            const chatHistoryDiv = document.getElementById('chatHistory');
-            chatHistoryDiv.innerHTML = '';
-
-            if (!chats || chats.length === 0) {
-                chatHistoryDiv.innerHTML = `<p class="text-slate-400 text-center py-8 text-sm bg-white/60 rounded-xl border border-dashed border-slate-200">ยินดีต้อนรับคุณ ${savedName} เริ่มต้นพิมพ์คุยกับแพทย์ได้เลยครับ</p>`;
+            if (!recordId) {
+                // ถ้ายังไม่ได้กรอกข้อมูล ให้เด้งกลับไปหน้าลงทะเบียน
+                window.location.replace("./index.html");
                 return;
             }
 
-            chats.forEach(chat => {
-                const chatTime = new Date(chat.created_at).toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
+            // ดึงข้อมูลคนไข้มาแสดงด้านบน
+            const { data, error } = await db
+                .from('patient_records')
+                .select('*')
+                .eq('id', recordId)
+                .single();
 
-                // กรณีที่ 1: แถวที่มีข้อความที่คนไข้พิมพ์ส่งไป
-                if (chat.chat_message) {
-                    let chatHtml = `
-                        <div class="flex flex-col items-end w-full space-y-1">
-                            <span class="text-[11px] text-slate-500 mr-1">${chat.patient_name}</span>
-                            <div class="flex items-end space-x-1.5 max-w-[80%]">
-                                <span class="text-[10px] text-slate-400 shrink-0 select-none">${chatTime}</span>
-                                <div class="user-bubble p-2.5 rounded-2xl rounded-tr-xs shadow-xs text-sm break-words">
-                                    ${chat.chat_message}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-
-                    // หากมีคำตอบหมอพ่วงมาด้วยในแถวนี้ ให้โชว์กล่องหมอต่อท้ายลงมา
-                    if (chat.expert_reply) {
-                        chatHtml += `
-                            <div class="flex flex-col items-start w-full space-y-1 mt-2">
-                                <span class="text-[11px] text-blue-600 font-semibold ml-1">👨‍⚕️ ผู้เชี่ยวชาญ</span>
-                                <div class="flex items-end space-x-1.5 max-w-[80%]">
-                                    <div class="doctor-bubble border border-blue-100 p-2.5 rounded-2xl rounded-tl-xs shadow-xs text-sm break-words">
-                                        ${chat.expert_reply}
-                                    </div>
-                                    <span class="text-[10px] text-slate-400 shrink-0 select-none">${chatTime}</span>
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        chatHtml = chatHtml.replace('shrink-0 select-none">', 'shrink-0 select-none text-right text-[10px] text-slate-400">ส่งแล้ว<br>');
-                    }
-                    chatHistoryDiv.innerHTML += chatHtml;
-                } 
-                // กรณีที่ 2: แถวที่เป็นข้อความที่คุณหมอเป็นคนพิมพ์เบิ้ลเพิ่มเดี่ยวๆ เข้ามาใหม่จากหลังบ้าน
-                else if (chat.expert_reply) {
-                    let chatHtml = `
-                        <div class="flex flex-col items-start w-full space-y-1 mt-2">
-                            <span class="text-[11px] text-blue-600 font-semibold ml-1">👨‍⚕️ ผู้เชี่ยวชาญ</span>
-                            <div class="flex items-end space-x-1.5 max-w-[80%]">
-                                <div class="doctor-bubble border border-blue-100 p-2.5 rounded-2xl rounded-tl-xs shadow-xs text-sm break-words">
-                                    ${chat.expert_reply}
-                                </div>
-                                <span class="text-[10px] text-slate-400 shrink-0 select-none">${chatTime}</span>
-                            </div>
-                        </div>
-                    `;
-                    chatHistoryDiv.innerHTML += chatHtml;
-                }
-            });
-
-            const chatContainer = document.getElementById('chatContainer');
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        async function loadClinics() {
-            const { data: clinics, error } = await db.from('clinics').select('*');
-            if (error || !clinics) return;
-            const clinicListDiv = document.getElementById('clinicList');
-            clinicListDiv.innerHTML = '';
-            clinics.forEach(clinic => {
-                clinicListDiv.innerHTML += `
-                    <div class="p-2 border border-amber-200 rounded-lg bg-white space-y-0.5">
-                        <h4 class="font-bold text-slate-800">${clinic.name}</h4>
-                        <p class="text-[11px] text-slate-600">📍 ${clinic.location}</p>
-                        ${clinic.google_maps_url ? `<a href="${clinic.google_maps_url}" target="_blank" class="text-[10px] text-blue-600 font-medium hover:underline">แผนที่ →</a>` : ''}
-                    </div>`;
-            });
-            document.getElementById('clinicSection').classList.remove('hidden');
-        }
-
-        document.getElementById('expertChatForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const chatMessageInput = document.getElementById('chatMessage');
-            const chatMessage = chatMessageInput.value;
-
-            const { error } = await db
-                .from('expert_chats')
-                .insert([{ patient_name: savedName, chat_message: chatMessage }]);
-
-            if (error) {
-                alert('ส่งข้อความไม่สำเร็จ: ' + error.message);
+            if (data) {
+                document.getElementById('patientInfo').innerText = `คนไข้: คุณ${data.first_name} ${data.last_name} (${data.province})`;
             } else {
-                chatMessageInput.value = '';
-                chatMessageInput.style.height = '40px'; 
-                await loadChatHistory();
+                document.getElementById('patientInfo').innerText = `รหัสอ้างอิง: ${recordId.substring(0, 8)}...`;
             }
         });
 
-        // คอยดึงอัปเดตแชทใหม่จากฐานข้อมูลทุกๆ 3 วินาที
-        setInterval(loadChatHistory, 3000);
+        // สลับแท็บ Chat / Clinic
+        function switchTab(tab) {
+            const chatView = document.getElementById('tabChatView');
+            const clinicView = document.getElementById('tabClinicView');
+            const btnChat = document.getElementById('btnNavChat');
+            const btnClinic = document.getElementById('btnNavClinic');
+
+            if (tab === 'chat') {
+                chatView.classList.remove('hidden');
+                clinicView.classList.add('hidden');
+                btnChat.className = "flex flex-col items-center gap-1 p-2 text-sky-500 font-medium";
+                btnClinic.className = "flex flex-col items-center gap-1 p-2 text-gray-400 font-medium hover:text-sky-500 transition";
+            } else {
+                chatView.classList.add('hidden');
+                clinicView.classList.remove('hidden');
+                btnClinic.className = "flex flex-col items-center gap-1 p-2 text-sky-500 font-medium";
+                btnChat.className = "flex flex-col items-center gap-1 p-2 text-gray-400 font-medium hover:text-sky-500 transition";
+            }
+        }
+
+        // ระบบส่งข้อความจำลองในหน้าแชต
+        document.getElementById('chatForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if(!msg) return;
+
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // เพิ่มข้อความของผู้ใช้
+            chatMessages.innerHTML += `
+                <div class="flex items-start justify-end gap-2">
+                    <div class="bg-sky-500 text-white p-3 rounded-2xl rounded-tr-none text-sm max-w-[80%] shadow-sm">
+                        ${msg}
+                    </div>
+                </div>
+            `;
+
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
     </script>
 </body>
 </html>
