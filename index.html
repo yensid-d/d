@@ -85,7 +85,7 @@
             </div>
 
             <!-- ปุ่มกดส่งข้อมูล -->
-            <button type="submit" class="w-full bg-sky-500 hover:bg-sky-600 active:scale-[0.99] text-white p-3 rounded-xl text-sm font-medium shadow-md shadow-sky-200 transition-all cursor-pointer mt-2">
+            <button type="submit" id="submitBtn" class="w-full bg-sky-500 hover:bg-sky-600 active:scale-[0.99] text-white p-3 rounded-xl text-sm font-medium shadow-md shadow-sky-200 transition-all cursor-pointer mt-2">
                 บันทึกข้อมูล (Submit) →
             </button>
         </form>
@@ -93,41 +93,50 @@
     </div>
 
     <script>
-       const SUPABASE_URL = "https://gsfwxrbeykupnobvnvvj.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_qpHFtNjXGKYTIXMXaT_NPw_BLIOv7oc";
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPABASE_URL = "https://gsfwxrbeykupnobvnvvj.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_qpHFtNjXGKYTIXMXaT_NPw_BLIOv7oc";
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-document.getElementById('patientForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+        document.getElementById('patientForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-    // 1. สร้าง UUID เองฝั่ง Browser
-    const recordId = crypto.randomUUID();
+            // ปรับปุ่มให้แสดงสถานะกำลังบันทึก
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "กำลังบันทึกข้อมูล...";
 
-    const formData = {
-        id: recordId, // ส่ง ID ที่เราสร้างเองไปด้วย
-        first_name: document.getElementById('first_name').value.trim(),
-        last_name: document.getElementById('last_name').value.trim(),
-        sex: document.getElementById('sex').value,
-        age: parseInt(document.getElementById('age').value),
-        province: document.getElementById('province').value.trim(),
-        district: document.getElementById('district').value.trim(),
-        test_result: document.getElementById('test_result').value,
-        symptoms: document.getElementById('symptoms').value.trim()
-    };
+            // 1. สร้าง ID UUID เองฝั่ง Client (ป้องกัน RLS SELECT Error)
+            const recordId = crypto.randomUUID();
 
-    // 2. เอา .select() ออกจากการ insert เพื่อไม่ให้ติด RLS ฝั่ง SELECT
-    const { error } = await db
-        .from('patient_records')
-        .insert([formData]);
+            const formData = {
+                id: recordId,
+                first_name: document.getElementById('first_name').value.trim(),
+                last_name: document.getElementById('last_name').value.trim(),
+                sex: document.getElementById('sex').value,
+                age: parseInt(document.getElementById('age').value),
+                province: document.getElementById('province').value.trim(),
+                district: document.getElementById('district').value.trim(),
+                test_result: document.getElementById('test_result').value,
+                symptoms: document.getElementById('symptoms').value.trim()
+            };
 
-    if (!error) {
-        alert('บันทึกข้อมูลสำเร็จ (Data Saved Successfully)!');
-        // 3. นำ ID ที่สร้างไว้ไปใช้งานต่อได้ทันที
-        localStorage.setItem('patient_record_id', recordId);
-    } else {
-        alert('เกิดข้อผิดพลาด (Error): ' + error.message);
-    }
-});
+            // 2. บันทึกเข้า Supabase
+            const { error } = await db
+                .from('patient_records')
+                .insert([formData]);
+
+            if (!error) {
+                // 3. บันทึก ID ลง localStorage
+                localStorage.setItem('patient_record_id', recordId);
+
+                // 4. เปลี่ยนหน้าไปยังหน้าแชตทันที (ปรับชื่อไฟล์ตามหน้าจริงของคุณได้เลย เช่น chat.html)
+                window.location.href = "chat.html";
+            } else {
+                alert('เกิดข้อผิดพลาด (Error): ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.innerText = "บันทึกข้อมูล (Submit) →";
+            }
+        });
     </script>
 
 </body>
