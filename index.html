@@ -93,36 +93,41 @@
     </div>
 
     <script>
-        const SUPABASE_URL = "https://gsfwxrbeykupnobvnvvj.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_qpHFtNjXGKYTIXMXaT_NPw_BLIOv7oc";
-        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+       const SUPABASE_URL = "https://gsfwxrbeykupnobvnvvj.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_qpHFtNjXGKYTIXMXaT_NPw_BLIOv7oc";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        document.getElementById('patientForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+document.getElementById('patientForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-            const formData = {
-                first_name: document.getElementById('first_name').value.trim(),
-                last_name: document.getElementById('last_name').value.trim(),
-                sex: document.getElementById('sex').value,
-                age: parseInt(document.getElementById('age').value),
-                province: document.getElementById('province').value.trim(),
-                district: document.getElementById('district').value.trim(),
-                test_result: document.getElementById('test_result').value,
-                symptoms: document.getElementById('symptoms').value.trim()
-            };
+    // 1. สร้าง UUID เองฝั่ง Browser
+    const recordId = crypto.randomUUID();
 
-            const { data, error } = await db
-                .from('patient_records')
-                .insert([formData])
-                .select();
+    const formData = {
+        id: recordId, // ส่ง ID ที่เราสร้างเองไปด้วย
+        first_name: document.getElementById('first_name').value.trim(),
+        last_name: document.getElementById('last_name').value.trim(),
+        sex: document.getElementById('sex').value,
+        age: parseInt(document.getElementById('age').value),
+        province: document.getElementById('province').value.trim(),
+        district: document.getElementById('district').value.trim(),
+        test_result: document.getElementById('test_result').value,
+        symptoms: document.getElementById('symptoms').value.trim()
+    };
 
-            if (!error && data.length > 0) {
-                alert('บันทึกข้อมูลสำเร็จ (Data Saved Successfully)!');
-                localStorage.setItem('patient_record_id', data[0].id);
-            } else {
-                alert('เกิดข้อผิดพลาด (Error): ' + error.message);
-            }
-        });
+    // 2. เอา .select() ออกจากการ insert เพื่อไม่ให้ติด RLS ฝั่ง SELECT
+    const { error } = await db
+        .from('patient_records')
+        .insert([formData]);
+
+    if (!error) {
+        alert('บันทึกข้อมูลสำเร็จ (Data Saved Successfully)!');
+        // 3. นำ ID ที่สร้างไว้ไปใช้งานต่อได้ทันที
+        localStorage.setItem('patient_record_id', recordId);
+    } else {
+        alert('เกิดข้อผิดพลาด (Error): ' + error.message);
+    }
+});
     </script>
 
 </body>
