@@ -57,13 +57,15 @@
                 </div>
                 <div class="col-span-4 space-y-1">
                     <label for="province" class="text-xs font-medium text-sky-800">จังหวัด (Province)</label>
-                    <input type="text" id="province" required placeholder="นนทบุรี"
+                    <input type="text" id="province" list="provinceList" required placeholder="พิมพ์ค้นหาจังหวัด..."
                            class="w-full p-2.5 bg-sky-50/50 border border-sky-100 rounded-xl text-sm focus:outline-none focus:border-sky-400 focus:bg-white transition">
+                    <datalist id="provinceList"></datalist>
                 </div>
                 <div class="col-span-5 space-y-1">
                     <label for="district" class="text-xs font-medium text-sky-800">อำเภอ/เขต (District)</label>
-                    <input type="text" id="district" required placeholder="เมือง"
-                           class="w-full p-2.5 bg-sky-50/50 border border-sky-100 rounded-xl text-sm focus:outline-none focus:border-sky-400 focus:bg-white transition">
+                    <input type="text" id="district" list="districtList" required disabled placeholder="เลือกจังหวัดก่อน"
+                           class="w-full p-2.5 bg-sky-50/50 border border-sky-100 rounded-xl text-sm focus:outline-none focus:border-sky-400 focus:bg-white transition disabled:bg-slate-100 disabled:cursor-not-allowed">
+                    <datalist id="districtList"></datalist>
                 </div>
             </div>
 
@@ -97,6 +99,62 @@
         const SUPABASE_ANON_KEY = "sb_publishable_qpHFtNjXGKYTIXMXaT_NPw_BLIOv7oc";
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        const provinceInput = document.getElementById('province');
+        const provinceList = document.getElementById('provinceList');
+        const districtInput = document.getElementById('district');
+        const districtList = document.getElementById('districtList');
+
+        let thaiLocationData = [];
+
+        // 🌐 โหลดข้อมูลจังหวัดและอำเภอทั้งหมดในไทยพร้อมชื่อภาษาอังกฤษ
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province_with_amphure_tambon.json');
+                thaiLocationData = await res.json();
+
+                // เรียงลำดับชื่อจังหวัดตามตัวอักษรไทย
+                thaiLocationData.sort((a, b) => a.name_th.localeCompare(b.name_th, 'th'));
+
+                // สร้างตัวเลือกจังหวัดทั้งหมดพร้อมวงเล็บภาษาอังกฤษ
+                thaiLocationData.forEach(prov => {
+                    const option = document.createElement('option');
+                    option.value = `${prov.name_th} (${prov.name_en})`;
+                    provinceList.appendChild(option);
+                });
+            } catch (err) {
+                console.error("Failed to fetch Thai location data:", err);
+            }
+        });
+
+        // 🏙️ เมื่อมีการพิมพ์หรือเลือกจังหวัด ให้โหลดอำเภอ/เขตทั้งหมดของจังหวัดนั้นทันที
+        provinceInput.addEventListener('input', () => {
+            const val = provinceInput.value.trim();
+            districtList.innerHTML = '';
+            districtInput.value = '';
+
+            // ค้นหาจังหวัดที่เลือก
+            const matchedProvince = thaiLocationData.find(p => 
+                val.startsWith(p.name_th) || val === `${p.name_th} (${p.name_en})`
+            );
+
+            if (matchedProvince && matchedProvince.amphure) {
+                // เรียงชื่ออำเภอตามตัวอักษรไทย
+                const sortedAmphures = [...matchedProvince.amphure].sort((a, b) => a.name_th.localeCompare(b.name_th, 'th'));
+
+                sortedAmphures.forEach(amp => {
+                    const option = document.createElement('option');
+                    option.value = `${amp.name_th} (${amp.name_en})`;
+                    districtList.appendChild(option);
+                });
+
+                districtInput.disabled = false;
+                districtInput.placeholder = "พิมพ์ค้นหาอำเภอ/เขต...";
+            } else {
+                districtInput.disabled = !val;
+                districtInput.placeholder = val ? "พิมพ์ระบุอำเภอ/เขต..." : "เลือกจังหวัดก่อน";
+            }
+        });
+
         document.getElementById('patientForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -113,8 +171,8 @@
                 last_name: document.getElementById('last_name').value.trim(),
                 sex: document.getElementById('sex').value,
                 age: parseInt(document.getElementById('age').value),
-                province: document.getElementById('province').value.trim(),
-                district: document.getElementById('district').value.trim(),
+                province: provinceInput.value.trim(),
+                district: districtInput.value.trim(),
                 test_result: document.getElementById('test_result').value,
                 symptoms: document.getElementById('symptoms').value.trim()
             };
