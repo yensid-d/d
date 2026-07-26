@@ -93,6 +93,7 @@
 
             if (data) {
                 patientName = `${data.first_name} ${data.last_name}`;
+                patientSex =  `${data.sex}`;
                 document.getElementById('patientInfo').innerText = `คุณ : ${patientName}`;
             }
         }
