@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi STIs Test Kit</title>
+    <title>Multi STIs Test Kit - Registration</title>
     <!-- Google Font: Itim -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,6 +21,7 @@
         <!-- Header -->
         <div class="text-center space-y-1">
             <h1 class="text-2xl font-bold text-sky-950">Multi STIs Test Kit</h1>
+            <p class="text-xs text-sky-600">ลงทะเบียนเพื่อรับคำปรึกษา</p>
         </div>
 
         <!-- Form -->
@@ -100,12 +101,11 @@
         document.getElementById('patientForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // ปรับปุ่มให้แสดงสถานะกำลังบันทึก
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.innerText = "กำลังบันทึกข้อมูล...";
 
-            // 1. สร้าง ID UUID เองฝั่ง Client (ป้องกัน RLS SELECT Error)
+            // สร้าง ID UUID เองฝั่ง Client
             const recordId = crypto.randomUUID();
 
             const formData = {
@@ -120,19 +120,19 @@
                 symptoms: document.getElementById('symptoms').value.trim()
             };
 
-            // 2. บันทึกเข้า Supabase
+            // บันทึกเข้า Supabase
             const { error } = await db
                 .from('patient_records')
                 .insert([formData]);
 
             if (!error) {
-                // 3. บันทึก ID ลง localStorage
+                // บันทึก ID ลง localStorage
                 localStorage.setItem('patient_record_id', recordId);
 
-                // 4. เปลี่ยนหน้าไปยังหน้าแชตทันที (ปรับชื่อไฟล์ตามหน้าจริงของคุณได้เลย เช่น chat.html)
-                window.location.href = "chat.html";
+                // เปลี่ยนหน้าไปยัง chat.html ทันที
+                window.location.replace("./chat.html");
             } else {
-                alert('เกิดข้อผิดพลาด (Error): ' + error.message);
+                alert('เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
                 submitBtn.disabled = false;
                 submitBtn.innerText = "บันทึกข้อมูล (Submit) →";
             }
