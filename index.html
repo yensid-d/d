@@ -11,56 +11,82 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { 
-            font-family: 'Itim', cursive; 
-            background-color: #fafafa;
-            color: #18181b;
-        }
+        body { font-family: 'Itim', cursive; background-color: #fafafa; }
     </style>
 </head>
-<body class="bg-zinc-50 min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-zinc-200 w-full max-w-md space-y-6">
+    <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-zinc-200 w-full max-w-lg space-y-5">
         
+        <!-- Header -->
         <div class="text-center space-y-1">
             <h1 class="text-2xl font-bold text-zinc-900">Multi STIs Test Kit</h1>
-            <p class="text-xs text-zinc-500">กรุณากรอกข้อมูล</p>
         </div>
 
-        <form id="patientForm" class="space-y-4">
+        <!-- Form -->
+        <form id="patientForm" class="space-y-4 text-zinc-800">
             
-            <!-- ช่องชื่อ-นามสกุล -->
-            <div class="space-y-1">
-                <label for="fullName" class="text-sm font-medium text-zinc-700">ชื่อ - นามสกุล</label>
-                <input type="text" id="fullName" required placeholder="เช่น ภวินท์ ใจดี"
-                       class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-800 transition">
+            <!-- บรรทัดที่ 1: ชื่อ | นามสกุล | เพศ -->
+            <div class="grid grid-cols-12 gap-2">
+                <div class="col-span-5 space-y-1">
+                    <label for="first_name" class="text-xs font-medium text-zinc-700">ชื่อ (First Name)</label>
+                    <input type="text" id="first_name" required placeholder="สมชาย"
+                           class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-800 transition">
+                </div>
+                <div class="col-span-5 space-y-1">
+                    <label for="last_name" class="text-xs font-medium text-zinc-700">นามสกุล (Last Name)</label>
+                    <input type="text" id="last_name" required placeholder="ใจดี"
+                           class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-800 transition">
+                </div>
+                <div class="col-span-2 space-y-1">
+                    <label for="sex" class="text-xs font-medium text-zinc-700">เพศ (Sex)</label>
+                    <select id="sex" required class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-800 transition cursor-pointer px-1">
+                        <option value="" disabled selected>-</option>
+                        <option value="ชาย">ชาย (Male)</option>
+                        <option value="หญิง">หญิง (Female)</option>
+                    </select>
+                </div>
             </div>
 
-            <!-- 🌟 เพิ่ม Dropdown เลือกเพศ -->
-            <div class="space-y-1">
-                <label for="sex" class="text-sm font-medium text-zinc-700">เพศ / Sex</label>
-                <select id="sex" required 
-                        class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-800 transition cursor-pointer">
-                    <option value="" disabled selected>-- เลือกเพศ / Sex --</option>
-                    <option value="ชาย">ชาย / Male</option>
-                    <option value="หญิง">หญิง / Female</option>
-                </select>
+            <!-- บรรทัดที่ 2: อายุ | จังหวัด | อำเภอ -->
+            <div class="grid grid-cols-12 gap-2">
+                <div class="col-span-3 space-y-1">
+                    <label for="age" class="text-xs font-medium text-zinc-700">อายุ (Age)</label>
+                    <input type="number" id="age" min="1" max="120" required placeholder="25"
+                           class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-800 transition">
+                </div>
+                <div class="col-span-4 space-y-1">
+                    <label for="province" class="text-xs font-medium text-zinc-700">จังหวัด (Province)</label>
+                    <input type="text" id="province" required placeholder="นนทบุรี"
+                           class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-800 transition">
+                </div>
+                <div class="col-span-5 space-y-1">
+                    <label for="district" class="text-xs font-medium text-zinc-700">อำเภอ/เขต (District)</label>
+                    <input type="text" id="district" required placeholder="เมือง"
+                           class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-800 transition">
+                </div>
             </div>
 
-            <!-- ช่องผลตรวจ/สถานะ -->
-            <div class="space-y-1">
-                <label for="testResult" class="text-sm font-medium text-zinc-700">ผลการตรวจเบื้องต้น</label>
-                <select id="testResult" required 
-                        class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-800 transition cursor-pointer">
-                    <option value="" disabled selected>-- เลือกผลตรวจ / Test results --</option>
-                    <option value="positive">ผลเป็นบวก / positive</option>
-                    <option value="negative">ผลเป็นลบ / negative</option>
-                </select>
+            <!-- บรรทัดที่ 3: ผลตรวจ | อาการ -->
+            <div class="grid grid-cols-12 gap-2">
+                <div class="col-span-4 space-y-1">
+                    <label for="test_result" class="text-xs font-medium text-zinc-700">ผลตรวจ (Test Result)</label>
+                    <select id="test_result" required class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-800 transition cursor-pointer">
+                        <option value="" disabled selected>-</option>
+                        <option value="positive">ผลเป็นบวก (Positive)</option>
+                        <option value="negative">ผลเป็นลบ (Negative)</option>
+                    </select>
+                </div>
+                <div class="col-span-8 space-y-1">
+                    <label for="symptoms" class="text-xs font-medium text-zinc-700">อาการเบื้องต้น (Symptoms)</label>
+                    <input type="text" id="symptoms" placeholder="ระบุอาการ เช่น มีไข้ ไอ เจ็บคอ"
+                           class="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-800 transition">
+                </div>
             </div>
 
-            <button type="submit" 
-                    class="w-full bg-zinc-900 hover:bg-zinc-800 text-white p-3 rounded-xl text-sm font-medium transition cursor-pointer shadow-sm mt-2">
-                ส่งข้อมูล / Submit information →
+            <!-- ปุ่มกดส่งข้อมูล -->
+            <button type="submit" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white p-3 rounded-xl text-sm font-medium transition cursor-pointer mt-2">
+                บันทึกข้อมูล (Submit) →
             </button>
         </form>
 
@@ -74,31 +100,30 @@
         document.getElementById('patientForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const fullName = document.getElementById('fullName').value.trim();
-            const gender = document.getElementById('gender').value;
-            const testResult = document.getElementById('testResult').value;
+            const formData = {
+                first_name: document.getElementById('first_name').value.trim(),
+                last_name: document.getElementById('last_name').value.trim(),
+                sex: document.getElementById('sex').value,
+                age: parseInt(document.getElementById('age').value),
+                province: document.getElementById('province').value.trim(),
+                district: document.getElementById('district').value.trim(),
+                test_result: document.getElementById('test_result').value,
+                symptoms: document.getElementById('symptoms').value.trim()
+            };
 
-            // บันทึกข้อมูลลง localStore เพื่อนำไปใช้ต่อในหน้า chat.html
-            localStorage.setItem('patient_chat_name', fullName);
-            localStorage.setItem('patient_gender', gender);
-            localStorage.setItem('patient_test_result', testResult);
-
-            // บันทึกประวัติเข้าตาราง patient_records ใน Supabase
-            const { error } = await db
+            const { data, error } = await db
                 .from('patient_records')
-                .insert([{ 
-                    name: fullName, 
-                    gender: gender, 
-                    test_result: testResult 
-                }]);
+                .insert([formData])
+                .select();
 
-            if (error) {
-                console.warn("แจ้งเตือนบันทึกตาราง patient_records:", error.message);
+            if (!error && data.length > 0) {
+                alert('บันทึกข้อมูลสำเร็จ (Data Saved Successfully)!');
+                localStorage.setItem('patient_record_id', data[0].id);
+            } else {
+                alert('เกิดข้อผิดพลาด (Error): ' + error.message);
             }
-
-            // นำทางไปยังหน้าแชท
-            window.location.href = 'chat.html';
         });
     </script>
+
 </body>
 </html>
