@@ -170,7 +170,7 @@
             }
         });
 
-        // ฟังก์ชันดึงข้อมูลคลินิกและรองรับฟิลด์ map_url / google_maps_url
+        // ฟังก์ชันดึงข้อมูลคลินิก พร้อมดึงข้อมูลอำเภอและจังหวัดมารวมแสดงผล
         async function loadClinicsFromDB() {
             const clinicContainer = document.getElementById('clinicList');
             const { data, error } = await db
@@ -183,12 +183,22 @@
             }
 
             clinicContainer.innerHTML = data.map(clinic => {
-                // รองรับชื่อฟิลด์ได้ทั้ง map_url หรือ google_maps_url
                 const mapLink = clinic.map_url || clinic.google_maps_url;
                 
-                // รองรับการแสดงผลชื่อคลินิกและที่อยู่จากฟิลด์ต่างๆ (clinic_name หรือ name, จังหวัด/อำเภอ หรือ location)
                 const nameText = clinic.clinic_name || clinic.name || 'ไม่ระบุชื่อคลินิก';
-                const addressText = clinic.address || clinic.location || 'ไม่ระบุสถานที่';
+                const addressText = clinic.address || clinic.location || '';
+                
+                // ดึงข้อมูลอำเภอและจังหวัด (รองรับชื่อฟิลด์ได้หลายแบบ)
+                const districtText = clinic.district || clinic.amphoe || clinic.อำเภอ || '';
+                const provinceText = clinic.province || clinic.จังหวัด || '';
+
+                // ประกอบที่อยู่ อำเภอ และจังหวัด เข้าด้วยกัน
+                let fullLocationParts = [];
+                if (addressText) fullLocationParts.push(addressText);
+                if (districtText) fullLocationParts.push(`อ.${districtText}`);
+                if (provinceText) fullLocationParts.push(`จ.${provinceText}`);
+
+                const finalLocation = fullLocationParts.length > 0 ? fullLocationParts.join(' ') : 'ไม่ระบุสถานที่';
                 const phoneText = clinic.phone || clinic.contact || '-';
 
                 const mapBtn = mapLink 
@@ -201,7 +211,7 @@
                 return `
                     <div class="p-3.5 bg-sky-50/60 rounded-xl border border-sky-100 hover:border-sky-300 transition shadow-sm">
                         <h3 class="font-bold text-sky-900 text-sm">${nameText}</h3>
-                        <p class="text-xs text-sky-700 mt-1">📍 ${addressText}</p>
+                        <p class="text-xs text-sky-700 mt-1">📍 ${finalLocation}</p>
                         <p class="text-xs text-sky-600 mt-0.5">📞 ติดต่อ: ${phoneText}</p>
                         ${mapBtn}
                     </div>
